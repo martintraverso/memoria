@@ -1,0 +1,221 @@
+.game-page {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.message {
+  margin: 0;
+  padding: 0.8rem;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.message.error {
+  background: #fde8e8;
+  color: #8a1f1f;
+}
+
+.top-bar {
+  background: #fff;
+  border-radius: 18px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  box-shadow: 0 10px 30px -18px rgba(27, 22, 48, 0.3);
+}
+
+.room {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #6f5f84;
+}
+
+.code {
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: oklch(58% 0.19 300);
+}
+
+.connection {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: #6f5f84;
+}
+
+.conn-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: oklch(64% 0.17 135);
+}
+
+.conn-dot.off {
+  background: oklch(72% 0.19 55);
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+.turn-banner {
+  border-radius: 16px;
+  padding: 0.8rem 1rem;
+  text-align: center;
+  font-weight: 800;
+  color: #fff;
+  background: oklch(58% 0.18 250);
+}
+
+.turn-banner.my-turn {
+  background: oklch(58% 0.19 300);
+}
+
+.turn-banner.waiting {
+  background: oklch(72% 0.19 55);
+}
+
+.scoreboard {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.score-card {
+  flex: 1;
+  background: #fff;
+  border-radius: 14px;
+  padding: 0.8rem;
+  text-align: center;
+  border: 3px solid transparent;
+}
+
+.score-card.active {
+  border-color: oklch(58% 0.19 300);
+}
+
+.caption {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6f5f84;
+  font-weight: 700;
+}
+
+.points {
+  font-size: 2rem;
+  font-weight: 800;
+  color: oklch(58% 0.19 300);
+}
+
+.board {
+  background: #fff;
+  border-radius: 20px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.6rem;
+  box-shadow: 0 10px 30px -18px rgba(27, 22, 48, 0.3);
+}
+
+.card {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 14px;
+  background: oklch(58% 0.19 300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 0 0 oklch(46% 0.19 300);
+}
+
+.card:disabled {
+  cursor: default;
+}
+
+.card-revealed {
+  background: #fff;
+  box-shadow: 0 2px 8px -4px rgba(27, 22, 48, 0.3);
+}
+
+.card-matched {
+  background: #fff;
+  border: 2px solid oklch(64% 0.17 135);
+  opacity: 0.6;
+  box-shadow: 0 2px 8px -4px rgba(27, 22, 48, 0.3);
+}
+
+.card-blocked {
+  background: #e9e5dd;
+  border: 2px dashed #cac1d5;
+  box-shadow: none;
+}
+
+.mark {
+  color: #fff;
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+
+.mark.blocked {
+  color: #7f728f;
+}
+
+.shape {
+  width: 46%;
+  height: 46%;
+}
+
+.shape-circle {
+  border-radius: 50%;
+}
+
+.shape-square {
+  border-radius: 12px;
+}
+
+.shape-diamond {
+  border-radius: 10px;
+  transform: rotate(45deg);
+}
+
+.shape-triangle {
+  clip-path: polygon(50% 8%, 8% 92%, 92% 92%);
+}
+
+.shape-hexagon {
+  clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0% 50%);
+}
+
+.result-banner {
+  background: #fff;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.result-banner p {
+  margin: 0;
+  font-weight: 700;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}

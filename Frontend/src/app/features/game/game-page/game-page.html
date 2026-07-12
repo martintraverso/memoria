@@ -1,0 +1,72 @@
+<section class="game-page">
+  @if (errorMessage) {
+    <p class="message error">{{ errorMessage }}</p>
+  }
+
+  @if (!errorMessage && !gameState) {
+    <p class="message">Cargando estado de la partida...</p>
+  }
+
+  @if (gameState) {
+    <header class="top-bar">
+      <div class="room">
+        <span class="label">SALA</span>
+        <span class="code">{{ gameState.roomCode }}</span>
+      </div>
+      <div class="connection">
+        <span class="conn-dot" [class.off]="connectionStatus !== 'connected'"></span>
+        <span>{{ connectionLabel }}</span>
+      </div>
+    </header>
+
+    <div class="turn-banner" [class.my-turn]="canPlay" [class.waiting]="isWaitingResolution">
+      {{ turnLabel }}
+    </div>
+
+    <section class="scoreboard">
+      <article class="score-card" [class.active]="canPlay">
+        <div class="caption">Vos</div>
+        <div class="points">{{ currentPlayerScore }}</div>
+      </article>
+      <article class="score-card" [class.active]="!canPlay && gameState.status === 'playing'">
+        <div class="caption">Rival</div>
+        <div class="points">{{ opponentScore }}</div>
+      </article>
+    </section>
+
+    <div class="board" [style.gridTemplateColumns]="'repeat(' + gameState.boardSize + ', minmax(56px, 1fr))'">
+      @for (card of gameState.cards; track card.id) {
+        <button
+          type="button"
+          class="card"
+          [class]="cardClass(card)"
+          (click)="flipCard(card.id)"
+          [disabled]="!canFlip(card)"
+        >
+          @if (card.state === 'hidden') {
+            <span class="mark">?</span>
+          }
+          @if (card.state === 'blocked') {
+            <span class="mark blocked">×</span>
+          }
+          @if (card.state === 'revealed' || card.state === 'matched') {
+            <span
+              class="shape"
+              [class]="cardShapeClass(card)"
+              [style.background]="cardFaceColor(card)"
+            ></span>
+          }
+        </button>
+      }
+    </div>
+
+    @if (gameState.status === 'finished') {
+      <section class="result-banner">
+        <p>{{ resultLabel }}</p>
+        <a routerLink="/result" [queryParams]="{ room: gameState.roomCode, winner: winnerName }">
+          Ver resultado final
+        </a>
+      </section>
+    }
+  }
+</section>

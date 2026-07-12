@@ -1,0 +1,248 @@
+.lobby-shell {
+  min-height: calc(100vh - 2rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  color: #2c2140;
+}
+
+.lobby-card {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 28px;
+  padding: 2rem;
+  box-shadow: 0 20px 50px -20px rgba(27, 22, 48, 0.25);
+}
+
+.home-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.brand-title {
+  margin: 0;
+  font-size: 3rem;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: -1px;
+}
+
+.brand-title .c1 {
+  color: oklch(58% 0.19 300);
+}
+.brand-title .c2 {
+  color: oklch(72% 0.19 55);
+}
+.brand-title .c3 {
+  color: oklch(62% 0.19 165);
+}
+.brand-title .c4 {
+  color: oklch(66% 0.19 20);
+}
+.brand-title .c5 {
+  color: oklch(58% 0.18 250);
+}
+
+.subtitle {
+  margin: 0;
+  text-align: center;
+  color: #6f5f84;
+}
+
+.action-block {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.action-block h3 {
+  margin: 0.5rem 0 0;
+  font-size: 1rem;
+}
+
+input {
+  width: 100%;
+  border: 2px solid #efeaf5;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  font: inherit;
+  outline: none;
+}
+
+input:focus {
+  border-color: oklch(58% 0.19 300);
+}
+
+.btn {
+  border: none;
+  border-radius: 16px;
+  padding: 0.95rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+}
+
+.btn-primary {
+  background: oklch(58% 0.19 300);
+  box-shadow: 0 8px 0 0 oklch(46% 0.19 300);
+}
+
+.btn-secondary {
+  background: oklch(72% 0.19 55);
+  box-shadow: 0 8px 0 0 oklch(58% 0.19 55);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  box-shadow: none;
+  background: #d8d0e4;
+}
+
+.host-card {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.room-code-wrap {
+  text-align: center;
+}
+
+.room-code-wrap p {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  color: #6f5f84;
+  font-weight: 700;
+}
+
+.room-code-wrap h2 {
+  margin: 0.3rem 0;
+  font-size: 2.3rem;
+  letter-spacing: 6px;
+  color: oklch(58% 0.19 300);
+}
+
+.link-btn {
+  border: none;
+  background: transparent;
+  text-decoration: underline;
+  font: inherit;
+  cursor: pointer;
+  color: #6f5f84;
+}
+
+.players {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  background: oklch(97% 0.02 95);
+  padding: 0.85rem 0.9rem;
+}
+
+.player-row .name {
+  font-weight: 600;
+  flex: 1;
+}
+
+.player-row .status {
+  color: #6f5f84;
+  font-size: 0.8rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d3cadf;
+}
+
+.dot.on {
+  background: oklch(64% 0.17 135);
+}
+
+.board-size p {
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  color: #6f5f84;
+  font-weight: 700;
+}
+
+.size-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.size-options button {
+  border: 2px solid #efeaf5;
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.7rem 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.size-options button.active {
+  background: oklch(58% 0.19 300);
+  color: #fff;
+  border-color: oklch(58% 0.19 300);
+}
+
+.guest-card {
+  max-width: 440px;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+}
+
+.spinner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 5px solid #efeaf5;
+  border-top-color: oklch(58% 0.19 300);
+  animation: spin 0.9s linear infinite;
+}
+
+.code-line {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6f5f84;
+  font-weight: 700;
+}
+
+.guest-card h3 {
+  margin: 0;
+}
+
+.start-btn {
+  margin-top: 0.25rem;
+}
+
+.error-message {
+  margin: 0.75rem 0 0;
+  color: #8a1f1f;
+  background: #fde8e8;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,13 @@
+<section class="result-page">
+  <div class="emoji">{{ outcomeEmoji }}</div>
+  <h2>{{ outcomeTitle }}</h2>
+  @if (roomCode) {
+    <p class="room"><strong>Sala:</strong> {{ roomCode }}</p>
+  }
+  <div class="actions">
+    <a routerLink="/" class="btn btn-primary">Jugar de nuevo</a>
+    @if (roomCode) {
+      <a routerLink="/lobby" class="btn btn-secondary">Salir al lobby</a>
+    }
+  </div>
+</section>

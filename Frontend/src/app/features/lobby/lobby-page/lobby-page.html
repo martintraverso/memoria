@@ -1,0 +1,104 @@
+<section class="lobby-shell">
+  @if (!room) {
+    <div class="lobby-card home-card">
+      <h1 class="brand-title">
+        <span class="c1">Me</span><span class="c2">mo</span>
+        <span class="c3"> Du</span><span class="c4">e</span><span class="c5">lo</span>
+      </h1>
+      <p class="subtitle">Memoria online, 1 vs 1. Encontrá más parejas que tu rival.</p>
+
+      <div class="action-block">
+        <h3>Crear sala</h3>
+        <input
+          type="text"
+          [(ngModel)]="createPlayerName"
+          placeholder="Tu nombre"
+          [disabled]="isLoading"
+        />
+        <button type="button" class="btn btn-primary" (click)="createRoom()" [disabled]="isLoading">
+          Crear sala
+        </button>
+      </div>
+
+      <div class="action-block">
+        <h3>Unirse con código</h3>
+        <input
+          type="text"
+          [(ngModel)]="joinPlayerName"
+          placeholder="Tu nombre"
+          [disabled]="isLoading"
+        />
+        <input
+          type="text"
+          [(ngModel)]="joinRoomCode"
+          placeholder="Código de sala"
+          maxlength="6"
+          [disabled]="isLoading"
+        />
+        <button type="button" class="btn btn-secondary" (click)="joinRoom()" [disabled]="isLoading">
+          Entrar a la sala
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (room && isRoomCreator) {
+    <div class="lobby-card host-card">
+      <div class="room-code-wrap">
+        <p>Código de sala</p>
+        <h2>{{ room.code }}</h2>
+        <button type="button" class="link-btn" (click)="copyRoomCode()">
+          {{ copiedCode ? 'Copiado' : 'Copiar código' }}
+        </button>
+      </div>
+
+      <div class="players">
+        <div class="player-row">
+          <span class="dot on"></span>
+          <span class="name">Vos (host)</span>
+          <span class="status">Conectado</span>
+        </div>
+        <div class="player-row">
+          <span class="dot" [class.on]="guestConnected"></span>
+          <span class="name">Rival</span>
+          <span class="status">{{ guestConnected ? 'Conectado' : 'Esperando…' }}</span>
+        </div>
+      </div>
+
+      <div class="board-size">
+        <p>Tamaño del tablero</p>
+        <div class="size-options">
+          <button type="button" [class.active]="selectedBoardSize === 2" (click)="selectedBoardSize = 2">
+            2x2
+          </button>
+          <button type="button" [class.active]="selectedBoardSize === 3" (click)="selectedBoardSize = 3">
+            3x3
+          </button>
+          <button type="button" [class.active]="selectedBoardSize === 4" (click)="selectedBoardSize = 4">
+            4x4
+          </button>
+          <button type="button" [class.active]="selectedBoardSize === 5" (click)="selectedBoardSize = 5">
+            5x5
+          </button>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-primary start-btn" (click)="goToGame()" [disabled]="startDisabled">
+        {{ startButtonLabel }}
+      </button>
+    </div>
+  }
+
+  @if (room && !isRoomCreator) {
+    <div class="lobby-card guest-card">
+      <div class="spinner"></div>
+      <p class="code-line">Sala {{ room.code }}</p>
+      <h3>Esperando que el host inicie la partida…</h3>
+      <p class="subtitle">Vas a entrar automáticamente en cuanto empiece.</p>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <p class="error-message">{{ errorMessage }}</p>
+  }
+</section>
