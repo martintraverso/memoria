@@ -196,3 +196,12 @@ Antes de codificar, cerrar estas 3 decisiones:
 - Carga automática de snapshots de salas y partidas al iniciar backend.
 - Guardado automático en cada cambio de sala (crear/unirse) y de partida (iniciar/flip/resolver).
 - Soporte configurable con `DATABASE_PATH` (por defecto `Backend/data/memoria.sqlite`).
+
+### Fase 7 - Refactor a arquitectura hexagonal del backend (completada)
+- Detalle completo en `docs/hexagonal-refactor-plan.md`.
+- `Backend/` organizado en `domain/`, `application/` (casos de uso + ports) y `adapters/` por feature (`rooms`, `game`, `shared`).
+- Reglas del juego en el modelo de dominio inmutable `Game`; los casos de uso deciden qué eventos emitir y en qué orden; el gateway solo traduce el protocolo.
+- Persistencia detrás de repositorios (SQLite y en memoria, con suite de contrato común); el formato de snapshots no cambió.
+- Los timers de mismatch pendientes se cancelan al apagar el servidor y la conexión SQLite se cierra.
+- `npm run lint` hace cumplir los límites entre capas.
+- Sin cambios en REST, eventos Socket.IO ni frontend; tests de caracterización e2e fijan ese comportamiento.
