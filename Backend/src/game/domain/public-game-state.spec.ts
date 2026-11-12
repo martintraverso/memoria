@@ -55,7 +55,9 @@ describe('toPublicGameState', () => {
       'boardSize',
       'cards',
       'players',
+      'rematchRequestedBy',
       'roomCode',
+      'round',
       'scores',
       'status',
       'turnPlayerId',
@@ -67,6 +69,8 @@ describe('toPublicGameState', () => {
       status: 'playing',
       turnPlayerId: 'ana',
       winnerPlayerId: null,
+      round: 1,
+      rematchRequestedBy: [],
       players: [
         { id: 'ana', name: 'Ana' },
         { id: 'beto', name: 'Beto' },
@@ -76,6 +80,26 @@ describe('toPublicGameState', () => {
         { playerId: 'beto', playerName: 'Beto', points: 0 },
       ],
     });
+  });
+
+  it('shows rematch requests and still hides the new board after a rematch', () => {
+    let game = startGame(2)
+      .flip('ana', 'card-1')
+      .game.flip('ana', 'card-2').game;
+    game = game.flip('beto', 'card-3').game.flip('beto', 'card-4').game;
+    const ids = { next: 0 };
+    const deps = {
+      newCardId: () => `new-${++ids.next}`,
+      shuffle: <T>(cards: T[]) => cards,
+    };
+
+    const waiting = game.requestRematch('beto', deps).game;
+    expect(toPublicGameState(waiting).rematchRequestedBy).toEqual(['beto']);
+
+    const state = toPublicGameState(waiting.requestRematch('ana', deps).game);
+    expect(state.round).toBe(2);
+    expect(state.rematchRequestedBy).toEqual([]);
+    expect(state.cards.every((card) => card.value === '')).toBe(true);
   });
 
   it('returns mutable copies, not the frozen game state', () => {

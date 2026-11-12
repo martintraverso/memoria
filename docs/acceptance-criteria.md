@@ -150,10 +150,11 @@ buttons are disabled.
   - An N×N board with every card face down ("?").
 - **And** on 3x3 and 5x5 boards, one card is marked "×" (blocked) and can't be played.
 
-### AC-5.2 The host plays first ✅
-- **Given** the match has just started
+### AC-5.2 Who plays first ✅
+- **Given** the first match of the room has just started
 - **Then** the host sees "Tu turno", and their score card is highlighted
 - **And** the guest sees "Turno rival", and the rival's score card is highlighted.
+- In each rematch (AC-6.9), the player who didn't start the previous match plays first.
 
 ### AC-5.3 Flip the first card ✅
 - **Given** it's my turn
@@ -258,28 +259,61 @@ buttons are disabled.
 - Note: 2x2 has 2 pairs, 3x3 has 4, 4x4 has 8 and 5x5 has 12. Every board has an even number of
   pairs, so a draw is possible on any of them.
 
-### AC-6.4 Final result screen: winner ✅
-- **Given** there's a winner
-- **When** a player clicks "Ver resultado final"
-- **Then** they see 🏆, "Ganó {winner name}" and "Sala: {code}".
+### AC-6.4 Final result screen: I won ✅
+- **Given** I have more points than my rival
+- **When** I click "Ver resultado final"
+- **Then** I see 🏆 and "¡Ganaste!"
+- **And** the final score "Vos {my points} – {rival points} {rival name}"
+- **And** "Sala: {code}".
 
-### AC-6.5 Final result screen: draw ⚠️
-- **Given** the match ended in a draw
-- **When** a player clicks "Ver resultado final"
-- **Then** they see 🤝 and "Empate".
-- **Current behavior**: the game screen sends `winner=Empate` to the result screen, so it shows
-  🏆 "Ganó Empate".
+### AC-6.5 Final result screen: I lost ✅
+- **Given** my rival has more points than me
+- **When** I click "Ver resultado final"
+- **Then** I see 😔 and "Perdiste"
+- **And** the final score and the room code, as in AC-6.4.
 
-### AC-6.6 Personalized result ❓
-- ❓ **To confirm**: should each player see a personal message ("¡Ganaste!" / "Perdiste") and the
-  final score (for example 5 – 3), instead of only the winner's name? Today both players see the
-  same message and no final score.
+### AC-6.6 Final result screen: draw ✅
+- **Given** both players have the same points
+- **When** I click "Ver resultado final"
+- **Then** I see 🤝 and "Empate"
+- **And** the final score and the room code, as in AC-6.4.
+
+### AC-6.6b Result screen without player data ✅
+- **Given** the result screen is opened without a `player` in the URL (old link)
+- **Then** it shows the neutral result: 🏆 "Ganó {winner name}" or 🤝 "Empate", plus the score
+  ("{name} {points} – {points} {name}"), and no "Revancha" button.
 
 ### AC-6.7 Actions after the match ✅
-- **Given** the user is on the final result screen
-- **Then** they see "Jugar de nuevo", which goes to the welcome screen
-- **And** "Salir al lobby", which goes to the lobby to create or join a new room.
-- ❓ **To confirm**: there is no rematch in the same room yet (out of scope in `docs/plan.md`).
+- **Given** I'm on the final result screen
+- **Then** I see "Revancha", "Jugar de nuevo" (goes to `/`) and "Salir al lobby" (goes to
+  `/lobby`).
+
+### AC-6.8 Ask for a rematch ✅
+- **Given** the match finished and I'm on the result screen
+- **When** I click "Revancha"
+- **Then** the button is disabled and reads "Esperando a {rival name}…"
+- **And** within ~1 second my rival sees "{my name} quiere la revancha" (on the result screen or
+  on the game screen) and, on the result screen, their button reads "Aceptar revancha".
+
+### AC-6.9 Rematch starts ✅
+- **Given** one player asked for a rematch
+- **When** the other player clicks "Aceptar revancha"
+- **Then** both players go to the game screen automatically
+- **And** the new match uses the same room, the same players and the same board size
+- **And** the scores start at 0 and every card is face down
+- **And** the player who did **not** start the previous match plays first.
+
+### AC-6.10 Rematch request before the match ends ✅
+- **Given** the match is still being played
+- **Then** a rematch can't be requested: the server rejects it with
+  "La partida todavía no terminó." (until AC-5.10 is fixed, the result screen shows
+  "No se pudo pedir la revancha.").
+
+### AC-6.11 Rival left ✅
+- **Given** I asked for a rematch and my rival left the result screen
+- **Then** I keep seeing "Esperando a {rival name}…" and can still leave with "Jugar de nuevo" or
+  "Salir al lobby".
+- Note: there is no presence tracking, so the app can't tell that the rival left. Out of scope.
 
 ---
 
@@ -290,6 +324,3 @@ buttons are disabled.
 | AC-5.6 | ❓ | Extra turn after a match, or always alternate? |
 | AC-5.10 | ⚠️ | Rejected moves give no feedback to the player. |
 | AC-5.15 | ⚠️ | Rejected start leaves the host on "Cargando estado de la partida...". |
-| AC-6.5 | ⚠️ | A draw shows "Ganó Empate" on the result screen. |
-| AC-6.6 | ❓ | Personal win/lose message and final score. |
-| AC-6.7 | ❓ | Rematch in the same room. |

@@ -180,6 +180,9 @@ export interface StoredGameSnapshot {
   winnerPlayerId: string | null;
   totalMatchablePairs: number;
   matchedPairs: number;
+  round: number;
+  startingPlayerId: string;
+  rematchRequestedBy: string[];
 }
 
 /** Returns the card ids grouped by value, ignoring the blocked card. */

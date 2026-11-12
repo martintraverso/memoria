@@ -16,6 +16,7 @@ import type {
 import type { Shuffler } from '../ports/outbound/shuffler.port';
 import { FlipCardUseCase, MISMATCH_REVEAL_MS } from './flip-card.use-case';
 import { GetGameStateUseCase } from './get-game-state.use-case';
+import { RequestRematchUseCase } from './request-rematch.use-case';
 import { ResolveMismatchUseCase } from './resolve-mismatch.use-case';
 import { StartGameUseCase } from './start-game.use-case';
 
@@ -58,6 +59,8 @@ class RecordingEvents implements GameEvents {
   turnChanged = (state: PublicGameState) => this.record('turnChanged', state);
   cardsHidden = (state: PublicGameState) => this.record('cardsHidden', state);
   gameFinished = (state: PublicGameState) => this.record('gameFinished', state);
+  rematchRequested = (state: PublicGameState) =>
+    this.record('rematchRequested', state);
   stateUpdated = (state: PublicGameState) => this.record('stateUpdated', state);
 
   private record(event: keyof GameEvents, state: PublicGameState): void {
@@ -383,6 +386,80 @@ describe('game use cases', () => {
 
       expect(resolveMismatch.execute({ roomCode: 'ZZZZZZ' })).toBeNull();
       expect(events.sent).toEqual([]);
+    });
+  });
+
+  describe('RequestRematchUseCase', () => {
+    let requestRematch: RequestRematchUseCase;
+
+    beforeEach(() => {
+      requestRematch = new RequestRematchUseCase(
+        games,
+        new SequentialIds(),
+        noShuffle,
+        events,
+      );
+    });
+
+    /** Plays a 2x2 game to a 1-1 draw. */
+    const finish = () => {
+      start();
+      flip('ana', 'card-1');
+      flip('ana', 'card-2');
+      flip('beto', 'card-3');
+      flip('beto', 'card-4');
+      events.clear();
+    };
+    const rematch = (playerId: string) =>
+      requestRematch.execute({ roomCode: ' abc234 ', playerId });
+
+    it('saves the first request and notifies rematchRequested then stateUpdated', () => {
+      finish();
+
+      const { state, outcome } = rematch('beto');
+
+      expect(outcome).toBe('waiting');
+      expect(state.rematchRequestedBy).toEqual(['beto']);
+      expect(stored()?.rematchRequestedBy).toEqual(['beto']);
+      expect(events.names()).toEqual(['rematchRequested', 'stateUpdated']);
+      expect(events.sent.every((item) => item.state === state)).toBe(true);
+    });
+
+    it('starts and saves the new round, notifying gameStarted then stateUpdated', () => {
+      finish();
+      rematch('ana');
+      events.clear();
+
+      const { state, outcome } = rematch('beto');
+
+      expect(outcome).toBe('started');
+      expect(state).toMatchObject({
+        status: 'playing',
+        round: 2,
+        turnPlayerId: 'beto',
+        rematchRequestedBy: [],
+      });
+      expect(state.cards.every((card) => card.value === '')).toBe(true);
+      expect(stored()?.status).toBe('playing');
+      expect(events.names()).toEqual(['gameStarted', 'stateUpdated']);
+    });
+
+    it('saves nothing and notifies nobody when the match is not over', () => {
+      start();
+      events.clear();
+      const before = stored()?.toSnapshot();
+
+      expect(() => rematch('ana')).toThrow(
+        new ConflictError('La partida todavía no terminó.'),
+      );
+      expect(stored()?.toSnapshot()).toEqual(before);
+      expect(events.sent).toEqual([]);
+    });
+
+    it('reports a room without a game', () => {
+      expect(() => rematch('ana')).toThrow(
+        new NotFoundError('No hay partida activa para esta sala.'),
+      );
     });
   });
 

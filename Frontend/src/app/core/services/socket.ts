@@ -21,7 +21,12 @@ export class SocketService {
     this.socket.on(eventName, handler);
   }
 
-  off(eventName: string): void {
+  /** Removes `handler`, or every handler of the event when it's omitted. */
+  off<T>(eventName: string, handler?: (payload: T) => void): void {
+    if (handler) {
+      this.socket.off(eventName, handler as (...args: unknown[]) => void);
+      return;
+    }
     this.socket.off(eventName);
   }
 

@@ -31,6 +31,7 @@ describe('SocketIoGameEvents', () => {
     ['turnChanged', 'turn.changed'],
     ['cardsHidden', 'cards.hidden'],
     ['gameFinished', 'game.finished'],
+    ['rematchRequested', 'game.rematch.requested'],
     ['stateUpdated', 'game.state.updated'],
   ])('maps %s to the %s event in the game room', (method, eventName) => {
     events[method](state);

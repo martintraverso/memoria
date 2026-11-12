@@ -25,6 +25,8 @@ interface PublicGameState {
   cards: { id: string; value: string; state: string }[];
   scores: { playerId: string; playerName: string; points: number }[];
   winnerPlayerId: string | null;
+  round: number;
+  rematchRequestedBy: string[];
 }
 
 interface Match {
@@ -227,6 +229,8 @@ describe('Game Socket.IO protocol (e2e)', () => {
         { playerId: match.guestId, playerName: 'Beto', points: 0 },
       ],
       winnerPlayerId: null,
+      round: 1,
+      rematchRequestedBy: [],
     });
     expect(state.cards).toHaveLength(4);
     for (const card of state.cards) {
@@ -528,6 +532,77 @@ describe('Game Socket.IO protocol (e2e)', () => {
     expect(state.scores.map((score) => score.points)).toEqual([1, 1]);
   });
 
+  it('plays a rematch once both players asked for it', async () => {
+    const match = await setupMatch();
+    const { roomCode, creatorId, guestId } = match;
+    await startGame(match, 2);
+    const [p0, p1] = pairsByValue(readGameSnapshot(database.path, roomCode));
+    await flip(match, match.creator, creatorId, p0[0], 2);
+    await flip(match, match.creator, creatorId, p0[1], 4);
+    await settleAndClear(match);
+    await flip(match, match.guest, guestId, p1[0], 2);
+    await flip(match, match.guest, guestId, p1[1], 4);
+    await settleAndClear(match);
+
+    // First request: the room learns who is waiting.
+    match.creator.socket.emit('game.rematch.request', {
+      roomCode,
+      playerId: creatorId,
+    });
+    await match.guest.waitForEventCount(2);
+    await match.creator.waitForEventCount(3);
+    await delay(SETTLE_MS);
+    expect(match.guest.events.map((item) => item.event)).toEqual([
+      'game.rematch.requested',
+      'game.state.updated',
+    ]);
+    expect(match.creator.events.map((item) => item.event)).toEqual([
+      'game.rematch.requested',
+      'game.state.updated',
+      'game.rematch.requested',
+    ]);
+    expect(lastState(match.guest)).toMatchObject({
+      status: 'finished',
+      rematchRequestedBy: [creatorId],
+    });
+    await settleAndClear(match);
+
+    // Second request: a new round starts, and the guest plays first.
+    match.guest.socket.emit('game.rematch.request', {
+      roomCode: roomCode.toLowerCase(),
+      playerId: guestId,
+    });
+    await match.creator.waitForEventCount(2);
+    await match.guest.waitForEventCount(3);
+    await delay(SETTLE_MS);
+    expect(match.creator.events.map((item) => item.event)).toEqual([
+      'game.started',
+      'game.state.updated',
+    ]);
+    expect(match.guest.events.map((item) => item.event)).toEqual([
+      'game.started',
+      'game.state.updated',
+      'game.started',
+    ]);
+    const state = lastState(match.creator);
+    expect(state).toMatchObject({
+      status: 'playing',
+      round: 2,
+      turnPlayerId: guestId,
+      winnerPlayerId: null,
+      rematchRequestedBy: [],
+    });
+    expect(state.scores.map((score) => score.points)).toEqual([0, 0]);
+    expect(state.cards.every((card) => card.value === '')).toBe(true);
+    await settleAndClear(match);
+
+    const [next] = pairsByValue(readGameSnapshot(database.path, roomCode));
+    await flip(match, match.guest, guestId, next[0], 2);
+    expect(lastState(match.creator).cards).toContainEqual(
+      expect.objectContaining({ id: next[0], state: 'revealed' }),
+    );
+  });
+
   describe('rejected requests (only the requester gets an exception event)', () => {
     async function expectRejected(
       match: Match,
@@ -609,6 +684,16 @@ describe('Game Socket.IO protocol (e2e)', () => {
         roomCode,
         playerId: creatorId,
         cardId: state.cards[0].id,
+      });
+    });
+
+    it('rejects a rematch while the match is being played', async () => {
+      const match = await setupMatch();
+      await startGame(match, 2);
+
+      await expectRejected(match, match.creator, 'game.rematch.request', {
+        roomCode: match.roomCode,
+        playerId: match.creatorId,
       });
     });
 

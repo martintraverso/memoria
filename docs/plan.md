@@ -26,7 +26,7 @@ Si son iguales, suma 1 punto. Si son distintas, se vuelven a ocultar.
 - Chat en partida.
 - Ranking global.
 - Login social.
-- Revancha automática compleja.
+- Revancha con cambio de tamaño de tablero o cancelación de la solicitud (la revancha simple está en la Fase 8).
 
 ---
 
@@ -205,3 +205,9 @@ Antes de codificar, cerrar estas 3 decisiones:
 - Los timers de mismatch pendientes se cancelan al apagar el servidor y la conexión SQLite se cierra.
 - `npm run lint` hace cumplir los límites entre capas.
 - Sin cambios en REST, eventos Socket.IO ni frontend; tests de caracterización e2e fijan ese comportamiento.
+
+### Fase 8 - Resultado personalizado y revancha (completada)
+- Detalle en `docs/docs-ac.md` (AC-6.4 a AC-6.11).
+- Pantalla de resultado personalizada: "¡Ganaste!", "Perdiste" o "Empate", con el marcador final ("Vos 2 – 1 Ana"). Lee el estado por socket en lugar de recibir el ganador por query param, lo que corrige "Ganó Empate".
+- Revancha en la misma sala: cada jugador la pide con `game.rematch.request`; la sala recibe `game.rematch.requested`. Cuando ambos la piden, empieza una nueva ronda (mismo tamaño de tablero, puntajes en 0) con `game.started`, y la empieza quien no empezó la ronda anterior.
+- Nuevos campos públicos del estado: `round` y `rematchRequestedBy`. Los snapshots guardados antes del cambio siguen cargando.

@@ -3,7 +3,13 @@ import {
   InvalidInputError,
   NotFoundError,
 } from '../../shared/domain/errors';
-import { FlippedGame, Game, GameSnapshot, NewGameInput } from './game';
+import {
+  FlippedGame,
+  Game,
+  GameSnapshot,
+  NewGameInput,
+  StoredGameSnapshot,
+} from './game';
 
 // With sequential ids and no shuffling the board is predictable:
 // card-1/card-2 are img-1, card-3/card-4 are img-2, and so on. On odd boards
@@ -69,6 +75,9 @@ describe('Game', () => {
         winnerPlayerId: null,
         totalMatchablePairs: 2,
         matchedPairs: 0,
+        round: 1,
+        startingPlayerId: 'ana',
+        rematchRequestedBy: [],
       });
     });
 
@@ -271,7 +280,144 @@ describe('Game', () => {
     });
   });
 
+  describe('requestRematch', () => {
+    let nextRematchId = 0;
+    const rematchDeps = {
+      newCardId: () => `new-${++nextRematchId}`,
+      shuffle: <T>(cards: T[]) => cards,
+    };
+
+    beforeEach(() => {
+      nextRematchId = 0;
+    });
+
+    /** A finished 2x2 game: each player found one pair (1-1). */
+    function finishedGame(): Game {
+      const game = play(startGame(), 'ana', 'card-1', 'card-2').game;
+      return play(game, 'beto', 'card-3', 'card-4').game;
+    }
+
+    it('rejects a rematch while the match is being played', () => {
+      expect(() => startGame().requestRematch('ana', rematchDeps)).toThrow(
+        new ConflictError('La partida todavía no terminó.'),
+      );
+    });
+
+    it.each(['', 'intruder'])('rejects the non-player %p', (playerId) => {
+      expect(() =>
+        finishedGame().requestRematch(playerId, rematchDeps),
+      ).toThrow(new InvalidInputError('El jugador no pertenece a la sala.'));
+    });
+
+    it('waits for the other player after the first request', () => {
+      const finished = finishedGame();
+
+      const { game, outcome } = finished.requestRematch('beto', rematchDeps);
+
+      expect(outcome).toBe('waiting');
+      expect(game.rematchRequestedBy).toEqual(['beto']);
+      expect(game.status).toBe('finished');
+      expect(game.toSnapshot().cards).toEqual(finished.toSnapshot().cards);
+      expect(finished.rematchRequestedBy).toEqual([]);
+    });
+
+    it('treats a repeated request as the same one', () => {
+      const once = finishedGame().requestRematch('ana', rematchDeps).game;
+
+      const { game, outcome } = once.requestRematch('ana', rematchDeps);
+
+      expect(outcome).toBe('waiting');
+      expect(game.rematchRequestedBy).toEqual(['ana']);
+    });
+
+    it('starts a new round once both players asked', () => {
+      const waiting = finishedGame().requestRematch('ana', rematchDeps).game;
+
+      const { game, outcome } = waiting.requestRematch('beto', rematchDeps);
+
+      expect(outcome).toBe('started');
+      expect(game.toSnapshot()).toEqual({
+        roomCode: 'ABC234',
+        boardSize: 2,
+        status: 'playing',
+        players: [ANA, BETO],
+        turnPlayerId: 'beto',
+        cards: [
+          { id: 'new-1', value: 'img-1', state: 'hidden' },
+          { id: 'new-2', value: 'img-1', state: 'hidden' },
+          { id: 'new-3', value: 'img-2', state: 'hidden' },
+          { id: 'new-4', value: 'img-2', state: 'hidden' },
+        ],
+        openedCardIds: [],
+        scores: [
+          { playerId: 'ana', playerName: 'Ana', points: 0 },
+          { playerId: 'beto', playerName: 'Beto', points: 0 },
+        ],
+        winnerPlayerId: null,
+        totalMatchablePairs: 2,
+        matchedPairs: 0,
+        round: 2,
+        startingPlayerId: 'beto',
+        rematchRequestedBy: [],
+      });
+    });
+
+    it('keeps the board size and its blocked card', () => {
+      let game = startGame({ boardSize: 3 });
+      for (const [player, first, second] of [
+        ['ana', 'card-1', 'card-2'],
+        ['beto', 'card-3', 'card-4'],
+        ['ana', 'card-5', 'card-6'],
+        ['beto', 'card-7', 'card-8'],
+      ]) {
+        game = play(game, player, first, second).game;
+      }
+
+      game = game.requestRematch('ana', rematchDeps).game;
+      game = game.requestRematch('beto', rematchDeps).game;
+
+      expect(game.boardSize).toBe(3);
+      expect(game.cards).toHaveLength(9);
+      expect(
+        game.cards.filter((card) => card.state === 'blocked'),
+      ).toHaveLength(1);
+    });
+
+    it('alternates who starts on every rematch', () => {
+      const rematch = (game: Game) =>
+        game
+          .requestRematch('ana', rematchDeps)
+          .game.requestRematch('beto', rematchDeps).game;
+      const finish = (game: Game) => {
+        const first = game.turnPlayerId!;
+        const second = first === 'ana' ? 'beto' : 'ana';
+        const [a, b, c, d] = game.cards.map((card) => card.id);
+        return play(play(game, first, a, b).game, second, c, d).game;
+      };
+
+      const round2 = rematch(finishedGame());
+      const round3 = rematch(finish(round2));
+
+      expect(round2.turnPlayerId).toBe('beto');
+      expect(round3.turnPlayerId).toBe('ana');
+      expect(round3.round).toBe(3);
+    });
+  });
+
   describe('snapshots', () => {
+    it('rehydrates a snapshot saved before rematches existed as a first round', () => {
+      const legacy: StoredGameSnapshot = startGame().toSnapshot();
+      delete legacy.round;
+      delete legacy.startingPlayerId;
+      delete legacy.rematchRequestedBy;
+
+      const game = Game.rehydrate(legacy);
+
+      expect(game.round).toBe(1);
+      expect(game.rematchRequestedBy).toEqual([]);
+      expect(game.toSnapshot().startingPlayerId).toBe('ana');
+    });
+
     it('rehydrates to an equal game', () => {
       const { game } = play(startGame(), 'ana', 'card-1', 'card-3');
 

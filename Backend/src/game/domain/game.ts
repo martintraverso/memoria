@@ -36,7 +36,25 @@ export interface GameSnapshot {
   winnerPlayerId: string | null;
   totalMatchablePairs: number;
   matchedPairs: number;
+  /** 1 for the room's first match, +1 for each rematch. */
+  round: number;
+  /** Who played first this round. Rematches alternate it. */
+  startingPlayerId: string;
+  /** Players who asked for a rematch. Only non-empty once finished. */
+  rematchRequestedBy: string[];
 }
+
+/**
+ * A snapshot as it may come from storage: rows saved before rematches
+ * existed have no round fields.
+ */
+export type StoredGameSnapshot = Omit<
+  GameSnapshot,
+  'round' | 'startingPlayerId' | 'rematchRequestedBy'
+> &
+  Partial<
+    Pick<GameSnapshot, 'round' | 'startingPlayerId' | 'rematchRequestedBy'>
+  >;
 
 export interface NewGameInput {
   roomCode: string;
@@ -58,6 +76,17 @@ export type FlipOutcome = 'first-card' | 'match' | 'mismatch' | 'finished';
 export interface FlippedGame {
   game: Game;
   outcome: FlipOutcome;
+}
+
+/**
+ * - `waiting`: only one player asked for a rematch so far.
+ * - `started`: both asked, so a new round is being played.
+ */
+export type RematchOutcome = 'waiting' | 'started';
+
+export interface RematchedGame {
+  game: Game;
+  outcome: RematchOutcome;
 }
 
 /**
@@ -104,12 +133,25 @@ export class Game {
       winnerPlayerId: null,
       totalMatchablePairs: boardSize.pairCount,
       matchedPairs: 0,
+      round: 1,
+      startingPlayerId: players[0].id,
+      rematchRequestedBy: [],
     });
   }
 
-  /** Rebuilds a game from stored data without re-running the start rules. */
-  static rehydrate(snapshot: GameSnapshot): Game {
-    return new Game(structuredClone(snapshot));
+  /**
+   * Rebuilds a game from stored data without re-running the start rules.
+   * Snapshots saved before rematches existed lack the round fields, so they
+   * get the values of a first match.
+   */
+  static rehydrate(snapshot: StoredGameSnapshot): Game {
+    const stored = structuredClone(snapshot);
+    return new Game({
+      ...stored,
+      round: stored.round ?? 1,
+      startingPlayerId: stored.startingPlayerId ?? stored.players[0].id,
+      rematchRequestedBy: stored.rematchRequestedBy ?? [],
+    });
   }
 
   get roomCode(): string {
@@ -142,6 +184,14 @@ export class Game {
 
   get winnerPlayerId(): string | null {
     return this.state.winnerPlayerId;
+  }
+
+  get round(): number {
+    return this.state.round;
+  }
+
+  get rematchRequestedBy(): readonly string[] {
+    return this.state.rematchRequestedBy;
   }
 
   /** Two non-matching cards are face up, waiting to be hidden. */
@@ -220,6 +270,50 @@ export class Game {
     return new Game(next);
   }
 
+  /**
+   * Records that a player wants a rematch. Once both players asked, deals a
+   * new board of the same size for the same players: scores go back to 0
+   * and the player who didn't start the previous round plays first.
+   */
+  requestRematch(
+    playerId: string,
+    boardDependencies: BoardFactoryDependencies,
+  ): RematchedGame {
+    ensureIsPlayer(playerId, this.state.players);
+    if (this.state.status !== 'finished') {
+      throw new ConflictError('La partida todavía no terminó.');
+    }
+
+    const next = this.toSnapshot();
+    if (!next.rematchRequestedBy.includes(playerId)) {
+      next.rematchRequestedBy.push(playerId);
+    }
+    const everyoneAgreed = next.players.every((player) =>
+      next.rematchRequestedBy.includes(player.id),
+    );
+    if (!everyoneAgreed) {
+      return { game: new Game(next), outcome: 'waiting' };
+    }
+
+    const starter = otherPlayer(next, next.startingPlayerId);
+    return {
+      game: new Game({
+        ...next,
+        status: 'playing',
+        turnPlayerId: starter.id,
+        cards: buildBoard(BoardSize.parse(next.boardSize), boardDependencies),
+        openedCardIds: [],
+        scores: next.scores.map((score) => ({ ...score, points: 0 })),
+        winnerPlayerId: null,
+        matchedPairs: 0,
+        round: next.round + 1,
+        startingPlayerId: starter.id,
+        rematchRequestedBy: [],
+      }),
+      outcome: 'started',
+    };
+  }
+
   /** A mutable deep copy of the full state. */
   toSnapshot(): GameSnapshot {
     return structuredClone(this.state);
@@ -262,6 +356,14 @@ function passTurn(state: GameSnapshot): void {
     throw new Error(`Turn player ${state.turnPlayerId} is not in the game.`);
   }
   state.turnPlayerId = state.players[(current + 1) % state.players.length].id;
+}
+
+function otherPlayer(state: GameSnapshot, playerId: string): GamePlayer {
+  const other = state.players.find((player) => player.id !== playerId);
+  if (!other) {
+    throw new Error(`Game ${state.roomCode} has no second player.`);
+  }
+  return other;
 }
 
 function winnerOf(scores: readonly PlayerScore[]): string | null {

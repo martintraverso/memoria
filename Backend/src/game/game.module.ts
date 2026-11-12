@@ -33,6 +33,7 @@ import {
 import { SHUFFLER, Shuffler } from './application/ports/outbound/shuffler.port';
 import { FlipCardUseCase } from './application/use-cases/flip-card.use-case';
 import { GetGameStateUseCase } from './application/use-cases/get-game-state.use-case';
+import { RequestRematchUseCase } from './application/use-cases/request-rematch.use-case';
 import { ResolveMismatchUseCase } from './application/use-cases/resolve-mismatch.use-case';
 import { StartGameUseCase } from './application/use-cases/start-game.use-case';
 
@@ -95,6 +96,16 @@ import { StartGameUseCase } from './application/use-cases/start-game.use-case';
         MISMATCH_SCHEDULER,
         ResolveMismatchUseCase,
       ],
+    },
+    {
+      provide: RequestRematchUseCase,
+      useFactory: (
+        games: GameRepository,
+        ids: IdGenerator,
+        shuffler: Shuffler,
+        events: GameEvents,
+      ) => new RequestRematchUseCase(games, ids, shuffler, events),
+      inject: [GAME_REPOSITORY, ID_GENERATOR, SHUFFLER, GAME_EVENTS],
     },
     {
       provide: GetGameStateUseCase,

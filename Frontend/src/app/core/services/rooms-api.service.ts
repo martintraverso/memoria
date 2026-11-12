@@ -21,15 +21,32 @@ export interface RoomActionResponse {
   playerId: string;
 }
 
+export interface GameCard {
+  id: string;
+  value: string;
+  state: 'hidden' | 'revealed' | 'matched' | 'blocked';
+}
+
+export interface GameScore {
+  playerId: string;
+  playerName: string;
+  points: number;
+}
+
+/** Mirrors the backend's `PublicGameState`. Keep both in sync. */
 export interface GameStateSnapshot {
   roomCode: string;
   boardSize: number;
   status: 'playing' | 'finished';
   players: { id: string; name: string }[];
   turnPlayerId: string | null;
-  cards: Array<{ id: string; value: string; state: string }>;
-  scores: Array<{ playerId: string; playerName: string; points: number }>;
+  cards: GameCard[];
+  scores: GameScore[];
   winnerPlayerId: string | null;
+  /** 1 for the room's first match, +1 for each rematch. */
+  round: number;
+  /** Players who asked for a rematch of the finished match. */
+  rematchRequestedBy: string[];
 }
 
 @Injectable({ providedIn: 'root' })

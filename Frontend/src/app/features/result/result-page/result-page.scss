@@ -49,3 +49,38 @@ h2 {
   border: 2px solid #efeaf5;
   background: #fff;
 }
+
+button.btn {
+  border: none;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button.btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.score {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #2c2140;
+}
+
+.message {
+  margin: 0;
+  color: #6f5f84;
+}
+
+.message.error {
+  color: #c62828;
+}
+
+.rematch-notice {
+  margin: 0;
+  font-weight: 600;
+  color: oklch(50% 0.19 300);
+}

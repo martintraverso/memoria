@@ -14,6 +14,7 @@ import { DomainErrorWsFilter } from '../../../../shared/adapters/ws/domain-error
 import { RoomCode } from '../../../../shared/domain/room-code';
 import { FlipCardUseCase } from '../../../application/use-cases/flip-card.use-case';
 import { GetGameStateUseCase } from '../../../application/use-cases/get-game-state.use-case';
+import { RequestRematchUseCase } from '../../../application/use-cases/request-rematch.use-case';
 import { StartGameUseCase } from '../../../application/use-cases/start-game.use-case';
 import type { PublicGameState } from '../../../domain/public-game-state';
 import { SocketServerRef } from '../../outbound/ws/socket-server.ref';
@@ -40,6 +41,7 @@ export class GameGateway
     private readonly startGameUseCase: StartGameUseCase,
     private readonly flipCardUseCase: FlipCardUseCase,
     private readonly getGameStateUseCase: GetGameStateUseCase,
+    private readonly requestRematchUseCase: RequestRematchUseCase,
     private readonly serverRef: SocketServerRef,
   ) {}
 
@@ -137,6 +139,25 @@ export class GameGateway
     });
     return {
       event: 'card.flip.applied',
+      data: state,
+    };
+  }
+
+  @SubscribeMessage('game.rematch.request')
+  handleRematchRequest(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { roomCode?: string; playerId?: string },
+  ): WsResponse<PublicGameState> {
+    const roomCode = RoomCode.parse(payload.roomCode).value;
+    // The result screen may ask before it subscribed; the requester must
+    // get the room broadcasts, including the start of the new round.
+    void client.join(roomCode);
+    const { state, outcome } = this.requestRematchUseCase.execute({
+      roomCode,
+      playerId: payload.playerId ?? '',
+    });
+    return {
+      event: outcome === 'started' ? 'game.started' : 'game.rematch.requested',
       data: state,
     };
   }

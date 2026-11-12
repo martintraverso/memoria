@@ -5,7 +5,7 @@ import {
 } from '../../../../persistence/sqlite-database';
 import type { RoomCode } from '../../../../shared/domain/room-code';
 import type { GameRepository } from '../../../application/ports/outbound/game-repository.port';
-import { Game, GameSnapshot } from '../../../domain/game';
+import { Game, StoredGameSnapshot } from '../../../domain/game';
 
 /**
  * Write-through cache over SQLite: every game is loaded at startup and each
@@ -33,7 +33,7 @@ export class SqliteGameRepository implements GameRepository, OnModuleInit {
       .prepare('SELECT payload FROM game_snapshots')
       .all() as Array<{ payload: string }>;
     for (const row of rows) {
-      const snapshot = JSON.parse(row.payload) as GameSnapshot;
+      const snapshot = JSON.parse(row.payload) as StoredGameSnapshot;
       this.cache.set(snapshot.roomCode, Game.rehydrate(snapshot));
     }
   }

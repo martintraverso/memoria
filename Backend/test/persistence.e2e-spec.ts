@@ -140,6 +140,9 @@ describe('SQLite persistence (e2e)', () => {
       winnerPlayerId: null,
       totalMatchablePairs: 4,
       matchedPairs: 0,
+      round: 1,
+      startingPlayerId: creatorId,
+      rematchRequestedBy: [],
     });
     // Stored cards keep their real values, even hidden ones.
     expect(storedGameBefore.cards).toHaveLength(9);

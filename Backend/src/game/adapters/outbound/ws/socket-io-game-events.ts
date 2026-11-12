@@ -34,6 +34,10 @@ export class SocketIoGameEvents implements GameEvents {
     this.emit('game.finished', state);
   }
 
+  rematchRequested(state: PublicGameState): void {
+    this.emit('game.rematch.requested', state);
+  }
+
   stateUpdated(state: PublicGameState): void {
     this.emit('game.state.updated', state);
   }

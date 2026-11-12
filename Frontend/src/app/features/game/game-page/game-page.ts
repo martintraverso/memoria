@@ -6,30 +6,11 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { RouterLink } from '@angular/router';
+import {
+  GameCard as GameCardView,
+  GameStateSnapshot as GameStateView,
+} from '../../../core/services/rooms-api.service';
 import { SocketService } from '../../../core/services/socket';
-
-interface GameCardView {
-  id: string;
-  value: string;
-  state: 'hidden' | 'revealed' | 'matched' | 'blocked';
-}
-
-interface GameScoreView {
-  playerId: string;
-  playerName: string;
-  points: number;
-}
-
-interface GameStateView {
-  roomCode: string;
-  boardSize: number;
-  status: 'playing' | 'finished';
-  players: { id: string; name: string }[];
-  turnPlayerId: string | null;
-  cards: GameCardView[];
-  scores: GameScoreView[];
-  winnerPlayerId: string | null;
-}
 
 @Component({
   selector: 'app-game-page',
@@ -54,6 +35,7 @@ export class GamePage implements OnInit, OnDestroy {
     'turn.changed',
     'score.updated',
     'game.finished',
+    'game.rematch.requested',
   ];
   private readonly connectionEvents = ['connect', 'disconnect'];
 
@@ -268,13 +250,20 @@ export class GamePage implements OnInit, OnDestroy {
   }
 
   get winnerName(): string {
-    if (!this.gameState || !this.gameState.winnerPlayerId) {
-      return 'Empate';
+    const winnerId = this.gameState?.winnerPlayerId;
+    if (!winnerId) {
+      return '';
     }
-    const winner = this.gameState.scores.find(
-      (score) => score.playerId === this.gameState?.winnerPlayerId,
+    return this.gameState?.scores.find((score) => score.playerId === winnerId)?.playerName ?? '';
+  }
+
+  /** The finished match's rival asked for a rematch. */
+  get rivalWantsRematch(): boolean {
+    return (
+      !!this.gameState &&
+      this.gameState.status === 'finished' &&
+      this.gameState.rematchRequestedBy.some((id) => id !== this.playerId)
     );
-    return winner?.playerName ?? 'Empate';
   }
 
   private requestLatestState(): void {

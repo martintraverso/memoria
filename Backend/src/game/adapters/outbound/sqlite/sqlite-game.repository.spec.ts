@@ -11,6 +11,7 @@ import {
   describeGameRepositoryContract,
   startTestGame,
 } from '../game-repository.contract-spec';
+import type { StoredGameSnapshot } from '../../../domain/game';
 import { SqliteGameRepository } from './sqlite-game.repository';
 
 describe('SqliteGameRepository', () => {
@@ -51,7 +52,29 @@ describe('SqliteGameRepository', () => {
     expect(restored?.hasPendingMismatch).toBe(true);
   });
 
-  it('stores the same JSON shape as before the refactor', () => {
+  it('loads rows saved before rematches existed as a first round', () => {
+    const legacy: StoredGameSnapshot = startTestGame().toSnapshot();
+    delete legacy.round;
+    delete legacy.startingPlayerId;
+    delete legacy.rematchRequestedBy;
+    const db = openSqliteDatabase(databasePath);
+    openDatabases.push(db);
+    new SqliteGameRepository(db);
+    db.prepare(
+      `INSERT INTO game_snapshots (room_code, payload, updated_at)
+       VALUES ('ABC234', ?, '2026-01-01T00:00:00.000Z')`,
+    ).run(JSON.stringify(legacy));
+
+    const restored = openRepository().findByRoomCode(RoomCode.parse('ABC234'));
+
+    expect(restored?.toSnapshot()).toMatchObject({
+      round: 1,
+      startingPlayerId: 'ana',
+      rematchRequestedBy: [],
+    });
+  });
+
+  it('stores the game snapshot JSON shape, with the round fields', () => {
     openRepository().save(startTestGame().flip('ana', 'card-1').game);
 
     const db = new Database(databasePath, { readonly: true });
@@ -84,6 +107,9 @@ describe('SqliteGameRepository', () => {
       winnerPlayerId: null,
       totalMatchablePairs: 2,
       matchedPairs: 0,
+      round: 1,
+      startingPlayerId: 'ana',
+      rematchRequestedBy: [],
     });
   });
 });

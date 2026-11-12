@@ -12,6 +12,8 @@ export interface GameEvents {
   turnChanged(state: PublicGameState): void;
   cardsHidden(state: PublicGameState): void;
   gameFinished(state: PublicGameState): void;
+  /** One player asked for a rematch and waits for the other one. */
+  rematchRequested(state: PublicGameState): void;
   /** Sent after every change, so a client can render from it alone. */
   stateUpdated(state: PublicGameState): void;
 }

@@ -11,6 +11,10 @@ export interface PublicGameState {
   cards: { id: string; state: CardState; value: string }[];
   scores: { playerId: string; playerName: string; points: number }[];
   winnerPlayerId: string | null;
+  /** 1 for the room's first match, +1 for each rematch. */
+  round: number;
+  /** Players who asked for a rematch of the finished match. */
+  rematchRequestedBy: string[];
 }
 
 /**
@@ -32,5 +36,7 @@ export function toPublicGameState(game: Game): PublicGameState {
     })),
     scores: game.scores.map((score) => ({ ...score })),
     winnerPlayerId: game.winnerPlayerId,
+    round: game.round,
+    rematchRequestedBy: [...game.rematchRequestedBy],
   };
 }
