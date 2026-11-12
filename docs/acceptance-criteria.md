@@ -244,37 +244,37 @@ buttons are disabled.
 ### AC-6.1 The match ends when every pair is found ✅
 - **Given** only one pair is left
 - **When** a player finds it
-- **Then** the match ends for both players
-- **And** the banner shows "Partida finalizada" and no card can be flipped.
-
-### AC-6.2 Winner message on the game screen ✅
-- **Given** the match ended and one player has more points
-- **Then** both players see "Ganó {winner name}"
-- **And** a "Ver resultado final" link.
-
-### AC-6.3 Draw message on the game screen ✅
-- **Given** the match ended with the same points for both players
-- **Then** both players see "Empate"
-- **And** a "Ver resultado final" link.
+- **Then** the match ends for both players and no card can be flipped anymore.
 - Note: 2x2 has 2 pairs, 3x3 has 4, 4x4 has 8 and 5x5 has 12. Every board has an even number of
   pairs, so a draw is possible on any of them.
 
+### AC-6.2 Automatic move to the result screen ✅
+- **Given** the match just ended
+- **Then** both players go to the final result screen automatically, within ~1 second
+- **And** the game screen shows no result message and no "Ver resultado final" link.
+- **And** the browser's "back" button doesn't return to the finished board (the game screen is
+  replaced in the history).
+
+### AC-6.3 Reopening a finished match ✅
+- **Given** a player reloads or reopens the game screen of a match that already ended
+- **Then** they go to the final result screen automatically.
+
 ### AC-6.4 Final result screen: I won ✅
 - **Given** I have more points than my rival
-- **When** I click "Ver resultado final"
+- **When** the match ends
 - **Then** I see 🏆 and "¡Ganaste!"
 - **And** the final score "Vos {my points} – {rival points} {rival name}"
 - **And** "Sala: {code}".
 
 ### AC-6.5 Final result screen: I lost ✅
 - **Given** my rival has more points than me
-- **When** I click "Ver resultado final"
+- **When** the match ends
 - **Then** I see 😔 and "Perdiste"
 - **And** the final score and the room code, as in AC-6.4.
 
 ### AC-6.6 Final result screen: draw ✅
 - **Given** both players have the same points
-- **When** I click "Ver resultado final"
+- **When** the match ends
 - **Then** I see 🤝 and "Empate"
 - **And** the final score and the room code, as in AC-6.4.
 
@@ -292,8 +292,8 @@ buttons are disabled.
 - **Given** the match finished and I'm on the result screen
 - **When** I click "Revancha"
 - **Then** the button is disabled and reads "Esperando a {rival name}…"
-- **And** within ~1 second my rival sees "{my name} quiere la revancha" (on the result screen or
-  on the game screen) and, on the result screen, their button reads "Aceptar revancha".
+- **And** within ~1 second my rival sees "{my name} quiere la revancha" and their button reads
+  "Aceptar revancha".
 
 ### AC-6.9 Rematch starts ✅
 - **Given** one player asked for a rematch

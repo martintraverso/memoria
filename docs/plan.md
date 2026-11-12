@@ -211,3 +211,4 @@ Antes de codificar, cerrar estas 3 decisiones:
 - Pantalla de resultado personalizada: "¡Ganaste!", "Perdiste" o "Empate", con el marcador final ("Vos 2 – 1 Ana"). Lee el estado por socket en lugar de recibir el ganador por query param, lo que corrige "Ganó Empate".
 - Revancha en la misma sala: cada jugador la pide con `game.rematch.request`; la sala recibe `game.rematch.requested`. Cuando ambos la piden, empieza una nueva ronda (mismo tamaño de tablero, puntajes en 0) con `game.started`, y la empieza quien no empezó la ronda anterior.
 - Nuevos campos públicos del estado: `round` y `rematchRequestedBy`. Los snapshots guardados antes del cambio siguen cargando.
+- Al terminar la partida, ambos jugadores pasan automáticamente a la pantalla de resultado (sin el link "Ver resultado final"); la URL de la partida se reemplaza en el historial.

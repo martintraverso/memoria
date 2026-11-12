@@ -59,17 +59,5 @@
         </button>
       }
     </div>
-
-    @if (gameState.status === 'finished') {
-      <section class="result-banner">
-        <p>{{ resultLabel }}</p>
-        @if (rivalWantsRematch) {
-          <p class="rematch-notice">{{ opponentName }} quiere la revancha</p>
-        }
-        <a routerLink="/result" [queryParams]="{ room: gameState.roomCode, player: playerId }">
-          Ver resultado final
-        </a>
-      </section>
-    }
   }
 </section>

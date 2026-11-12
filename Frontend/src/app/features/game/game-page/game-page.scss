@@ -197,19 +197,6 @@
   clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0% 50%);
 }
 
-.result-banner {
-  background: #fff;
-  border-radius: 14px;
-  padding: 0.85rem 1rem;
-  display: grid;
-  gap: 0.4rem;
-}
-
-.result-banner p {
-  margin: 0;
-  font-weight: 700;
-}
-
 @keyframes pulse {
   0%,
   100% {
@@ -218,9 +205,4 @@
   50% {
     opacity: 0.55;
   }
-}
-
-.result-banner .rematch-notice {
-  font-weight: 600;
-  color: oklch(50% 0.19 300);
 }

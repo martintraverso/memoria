@@ -4,8 +4,7 @@ import {
   OnDestroy,
   OnInit,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   GameCard as GameCardView,
   GameStateSnapshot as GameStateView,
@@ -14,7 +13,7 @@ import { SocketService } from '../../../core/services/socket';
 
 @Component({
   selector: 'app-game-page',
-  imports: [RouterLink],
+  imports: [],
   templateUrl: './game-page.html',
   styleUrl: './game-page.scss',
 })
@@ -38,9 +37,11 @@ export class GamePage implements OnInit, OnDestroy {
     'game.rematch.requested',
   ];
   private readonly connectionEvents = ['connect', 'disconnect'];
+  private leavingToResult = false;
 
   constructor(
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly socketService: SocketService,
     private readonly changeDetectorRef: ChangeDetectorRef,
   ) {}
@@ -71,6 +72,10 @@ export class GamePage implements OnInit, OnDestroy {
     for (const eventName of this.socketEvents) {
       this.socketService.on<GameStateView>(eventName, (state) => {
         this.gameState = state;
+        if (state.status === 'finished') {
+          this.goToResult();
+          return;
+        }
         this.triggerViewUpdate();
       });
     }
@@ -194,13 +199,6 @@ export class GamePage implements OnInit, OnDestroy {
     return this.gameState.status === 'playing' ? 'En juego' : 'Finalizada';
   }
 
-  get resultLabel(): string {
-    if (!this.gameState || this.gameState.status !== 'finished') {
-      return '';
-    }
-    return this.gameState.winnerPlayerId ? `Ganó ${this.winnerName}` : 'Empate';
-  }
-
   cardLabel(card: GameCardView): string {
     if (card.state === 'hidden') {
       return '?';
@@ -249,21 +247,19 @@ export class GamePage implements OnInit, OnDestroy {
     return 'Conectando...';
   }
 
-  get winnerName(): string {
-    const winnerId = this.gameState?.winnerPlayerId;
-    if (!winnerId) {
-      return '';
+  /**
+   * The match is over: both players go straight to the result screen. The
+   * game URL is replaced, so going back doesn't land on a finished board.
+   */
+  private goToResult(): void {
+    if (this.leavingToResult) {
+      return;
     }
-    return this.gameState?.scores.find((score) => score.playerId === winnerId)?.playerName ?? '';
-  }
-
-  /** The finished match's rival asked for a rematch. */
-  get rivalWantsRematch(): boolean {
-    return (
-      !!this.gameState &&
-      this.gameState.status === 'finished' &&
-      this.gameState.rematchRequestedBy.some((id) => id !== this.playerId)
-    );
+    this.leavingToResult = true;
+    void this.router.navigate(['/result'], {
+      queryParams: { room: this.roomCode, player: this.playerId },
+      replaceUrl: true,
+    });
   }
 
   private requestLatestState(): void {

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
+import { vi } from 'vitest';
 import { SocketService } from '../../../core/services/socket';
 import { FakeSocketService, finishedState } from '../../../testing/fake-socket.service';
 import { GamePage } from './game-page';
@@ -7,6 +8,17 @@ import { GamePage } from './game-page';
 describe('GamePage', () => {
   let socket: FakeSocketService;
   let fixture: ComponentFixture<GamePage>;
+  let navigate: ReturnType<typeof vi.spyOn>;
+
+  /** Ana and Beto's 2x2 match in progress, Beto's turn. */
+  const playingState = () =>
+    finishedState({
+      status: 'playing',
+      turnPlayerId: 'beto',
+      winnerPlayerId: null,
+      cards: finishedState().cards.map((card) => ({ ...card, value: '', state: 'hidden' })),
+      scores: finishedState().scores.map((score) => ({ ...score, points: 0 })),
+    });
 
   beforeEach(async () => {
     socket = new FakeSocketService();
@@ -25,6 +37,7 @@ describe('GamePage', () => {
         },
       ],
     }).compileComponents();
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     fixture = TestBed.createComponent(GamePage);
     fixture.detectChanges();
   });
@@ -36,46 +49,33 @@ describe('GamePage', () => {
     fixture.detectChanges();
   }
 
-  it('links to the result screen with the room and player, not the winner', () => {
-    receive('game.finished', finishedState({ winnerPlayerId: null }));
+  it('renders the match while it is being played', () => {
+    receive('game.state.updated', playingState());
 
-    const link = element().querySelector<HTMLAnchorElement>('.result-banner a');
-    const url = new URL(link?.href ?? '', 'http://localhost');
-    expect(url.pathname).toBe('/result');
-    expect(url.searchParams.get('room')).toBe('ABC234');
-    expect(url.searchParams.get('player')).toBe('beto');
-    expect(url.searchParams.has('winner')).toBe(false);
-    expect(element().textContent).toContain('Empate');
-  });
-
-  it('tells the player that the rival wants a rematch', () => {
-    receive('game.rematch.requested', finishedState({ rematchRequestedBy: ['ana'] }));
-
-    expect(element().textContent).toContain('Ana quiere la revancha');
-  });
-
-  it('does not show the notice for the player’s own request', () => {
-    receive('game.rematch.requested', finishedState({ rematchRequestedBy: ['beto'] }));
-
-    expect(element().textContent).not.toContain('quiere la revancha');
-  });
-
-  it('renders the new round when the rematch starts', () => {
-    receive('game.finished', finishedState());
-
-    receive(
-      'game.started',
-      finishedState({
-        status: 'playing',
-        turnPlayerId: 'beto',
-        winnerPlayerId: null,
-        round: 2,
-        cards: finishedState().cards.map((card) => ({ ...card, value: '', state: 'hidden' })),
-        scores: finishedState().scores.map((score) => ({ ...score, points: 0 })),
-      }),
-    );
-
-    expect(element().querySelector('.result-banner')).toBeNull();
     expect(element().querySelector('.turn-banner')?.textContent).toContain('Tu turno');
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('goes straight to the result screen when the match finishes, without a link', () => {
+    receive('game.state.updated', playingState());
+
+    receive('game.finished', finishedState({ winnerPlayerId: null }));
+    receive('game.state.updated', finishedState({ winnerPlayerId: null }));
+
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith(['/result'], {
+      queryParams: { room: 'ABC234', player: 'beto' },
+      replaceUrl: true,
+    });
+    expect(element().textContent).not.toContain('Ver resultado final');
+  });
+
+  it('goes to the result screen when it opens on a match that already finished', () => {
+    receive('game.state.updated', finishedState());
+
+    expect(navigate).toHaveBeenCalledWith(['/result'], {
+      queryParams: { room: 'ABC234', player: 'beto' },
+      replaceUrl: true,
+    });
   });
 });

@@ -3,6 +3,12 @@
 **Status: implemented** (Phase 1 and Phase 2). The criteria in section 1 are now in
 `docs/acceptance-criteria.md`.
 
+**Later change (AC-6.2, AC-6.3):** the game screen no longer shows a result banner or a
+"Ver resultado final" link. When the match ends, both players go straight to the result screen
+(the game URL is replaced in the history). The game-screen parts of sections 2.1 and 3.4 (the
+result link and the "quiere la revancha" notice on the finished banner) no longer apply: the
+rematch notice is only on the result screen.
+
 This plan covers two open questions from `docs/acceptance-criteria.md`:
 
 | AC | Decision | Scope |
